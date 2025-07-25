@@ -1,0 +1,8 @@
+[package]
+name = "poseidon_hash_mina"
+version = "0.1.0"
+edition = "2024"
+author = "youtpout and claude" 
+
+[dependencies]
+num-bigint = "0.4"
