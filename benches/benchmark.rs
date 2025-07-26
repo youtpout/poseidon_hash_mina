@@ -1,6 +1,7 @@
 use criterion::{Criterion, black_box, criterion_group, criterion_main};
-use num_bigint::BigInt;
+use num_bigint::{BigInt, BigUint};
 use poseidon_hash_mina::PoseidonHash;
+use std::str::FromStr;
 // Import PoseidonHash from its module (update the path if needed)
 
 fn benchmark_poseidon_hashes(c: &mut Criterion) {
@@ -11,12 +12,73 @@ fn benchmark_poseidon_hashes(c: &mut Criterion) {
     group.bench_function("poseidon_hash", |b| {
         b.iter(|| {
             let input_clone = black_box(input.clone());
-           let _ = PoseidonHash::hash(input_clone.clone());
+            let _ = PoseidonHash::hash(input_clone.clone());
         });
     });
 
     group.finish();
 }
 
-criterion_group!(benches, benchmark_poseidon_hashes);
+fn bench_from_str(c: &mut Criterion) {
+    let val_str = "12035446894107573964500871153637039653510326950134440362813193268448863222019";
+
+    c.bench_function("BigInt::from_str", |b| {
+        b.iter(|| {
+            let _ = BigInt::from_str(val_str).unwrap();
+        })
+    });
+}
+
+fn bench_bigint_from_str(c: &mut Criterion) {
+    let val_str = "12035446894107573964500871153637039653510326950134440362813193268448863222019";
+
+    c.bench_function("BigInt::from_str", |b| {
+        b.iter(|| {
+            let _ = BigInt::from_str(val_str).unwrap();
+        })
+    });
+}
+
+fn bench_bigint_from_bytes(c: &mut Criterion) {
+    let val_str = "12035446894107573964500871153637039653510326950134440362813193268448863222019";
+    let bigint = BigInt::from_str(val_str).unwrap();
+    let bytes = bigint.to_signed_bytes_be();
+
+    c.bench_function("BigInt::from_signed_bytes_be", |b| {
+        b.iter(|| {
+            let _ = BigInt::from_signed_bytes_be(&bytes);
+        })
+    });
+}
+
+fn bench_biguint_from_str(c: &mut Criterion) {
+    let val_str = "12035446894107573964500871153637039653510326950134440362813193268448863222019";
+
+    c.bench_function("BigUint::from_str", |b| {
+        b.iter(|| {
+            let _ = BigUint::from_str(val_str).unwrap();
+        })
+    });
+}
+
+fn bench_biguint_from_bytes(c: &mut Criterion) {
+    let val_str = "12035446894107573964500871153637039653510326950134440362813193268448863222019";
+    let biguint = BigUint::from_str(val_str).unwrap();
+    let bytes = biguint.to_bytes_be();
+
+    c.bench_function("BigUint::from_bytes_be", |b| {
+        b.iter(|| {
+            let _ = BigUint::from_bytes_be(&bytes);
+        })
+    });
+}
+
+criterion_group!(
+    benches,
+    benchmark_poseidon_hashes,
+    bench_bigint_from_str,
+    bench_bigint_from_bytes,
+    bench_biguint_from_str,
+    bench_biguint_from_bytes
+);
 criterion_main!(benches);
