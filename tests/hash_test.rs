@@ -70,6 +70,24 @@ mod tests {
         )
         .unwrap();
         assert_eq!(result, exepected);
-        println!("Hash of [3412, 548748548]: {}", result);
+        println!("Hash of multiple elements: {}", result);
+    }
+
+    #[test]
+    fn test_poseidon_hash_negative_elements() {
+        let input = vec![
+            BigInt::from_str("-35545").unwrap(),
+            BigInt::ZERO,
+            BigInt::from_str("-7878454").unwrap(),
+            BigInt::from_str("45524").unwrap(),
+            BigInt::from_str("-1").unwrap(),
+        ];
+        let result = PoseidonHash::hash(input);
+        let exepected: BigInt = BigInt::from_str(
+            "17944732201997716732580423582703197695777318095974149487644452711464169895343",
+        )
+        .unwrap();
+        assert_eq!(result, exepected);
+        println!("Hash of negative elements: {}", result);
     }
 }
