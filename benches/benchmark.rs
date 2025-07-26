@@ -1,10 +1,10 @@
 use criterion::{Criterion, black_box, criterion_group, criterion_main};
-use num_bigint::BigInt;
+use num_bigint::BigUint;
 use poseidon_hash_mina::PoseidonHash;
 // Import PoseidonHash from its module (update the path if needed)
 
 fn benchmark_poseidon_hashes(c: &mut Criterion) {
-    let input = vec![BigInt::from(3412), BigInt::from(548_748_548)];
+    let input: Vec<BigUint> = vec![BigUint::from(3412u32), BigUint::from(548_748_548u32)];
 
     let mut group = c.benchmark_group("poseidon_group");
 

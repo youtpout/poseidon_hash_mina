@@ -1,15 +1,15 @@
-use num_bigint::BigInt;
+use num_bigint::BigUint;
 use poseidon_hash_mina::PoseidonHash;
 
 // Example usage
 fn main() {
     // Example: Hash a single value
-    let input = vec![BigInt::from(12)];
-    let hash_result = PoseidonHash::hash(input);
+    let input: Vec<BigUint> = vec![BigUint::from(12u32)];
+    let hash_result: BigUint = PoseidonHash::hash(input);
     println!("Poseidon hash of [12]: {}", hash_result);
 
     // Example: Hash multiple values
-    let input = vec![BigInt::from(3412), BigInt::from(548748548)];
+    let input: Vec<BigUint> = vec![BigUint::from(3412u32), BigUint::from(548748548u32)];
     let hash_result = PoseidonHash::hash(input);
     println!("Poseidon hash of [3412, 548748548]: {}", hash_result);
 }
