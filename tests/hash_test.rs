@@ -1,4 +1,4 @@
-use num_bigint::BigUint;
+use primitive_types::U256;
 use std::str::FromStr;
 use poseidon_hash_mina::PoseidonHash;
 
@@ -9,16 +9,16 @@ mod tests {
 
     #[test]
     fn test_poseidon_hash_empty() {
-        let input: Vec<BigUint> = vec![];
+        let input: Vec<U256> = vec![];
         let result = PoseidonHash::hash(input);
         println!("Hash of empty input: {}", result);
     }
 
     #[test]
     fn test_poseidon_hash_single_element() {
-        let input = vec![BigUint::from(12u32)];
-        let result: BigUint = PoseidonHash::hash(input);
-        let exepected: BigUint = BigUint::from_str(
+        let input = vec![U256::from(12u32)];
+        let result: U256 = PoseidonHash::hash(input);
+        let exepected: U256 = U256::from_str(
             "20307190475163560179843878304233687113040243867319358507811895775846718326775",
         )
         .unwrap();
@@ -28,9 +28,9 @@ mod tests {
 
     #[test]
     fn test_poseidon_hash_two_elements() {
-        let input = vec![BigUint::from(3412u32), BigUint::from(548748548u32)];
-        let result: BigUint = PoseidonHash::hash(input);
-        let exepected: BigUint = BigUint::from_str(
+        let input = vec![U256::from(3412u32), U256::from(548748548u32)];
+        let result: U256 = PoseidonHash::hash(input);
+        let exepected: U256 = U256::from_str(
             "24245350037390325723675562428846509781869515058976947458013661211417354108422",
         )
         .unwrap();
