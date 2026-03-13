@@ -1,15 +1,13 @@
-use num_bigint::BigInt;
-use poseidon_hash_mina::PoseidonHash;
+use poseidon_mina::{Fp, Sponge};
 
-// Example usage
 fn main() {
-    // Example: Hash a single value
-    let input = vec![BigInt::from(12)];
-    let hash_result = PoseidonHash::hash(input);
-    println!("Poseidon hash of [12]: {}", hash_result);
+    // Hash a single value
+    let mut sponge = Sponge::new();
+    sponge.absorb(&[Fp::from(12u64)]);
+    println!("Poseidon hash of [12]: {:?}", sponge.squeeze().to_be_bytes());
 
-    // Example: Hash multiple values
-    let input = vec![BigInt::from(3412), BigInt::from(548748548)];
-    let hash_result = PoseidonHash::hash(input);
-    println!("Poseidon hash of [3412, 548748548]: {}", hash_result);
+    // Hash multiple values
+    let mut sponge = Sponge::new();
+    sponge.absorb(&[Fp::from(3412u64), Fp::from(548748548u64)]);
+    println!("Poseidon hash of [3412, 548748548]: {:?}", sponge.squeeze().to_be_bytes());
 }

@@ -1,0 +1,63 @@
+// src/poseidon.rs
+use crate::fp::Fp;
+use crate::params::{WIDTH, FULL_ROUNDS, RATE, MDS, ROUND_CONSTANTS};
+
+pub struct Sponge {
+    state: [Fp; WIDTH],
+}
+
+impl Sponge {
+    pub fn new() -> Self {
+        Self { state: [Fp::ZERO; WIDTH] }
+    }
+
+    fn add_round_constants(&mut self, round: usize) {
+        for i in 0..WIDTH {
+            self.state[i] = self.state[i].add(ROUND_CONSTANTS[round][i]);
+        }
+    }
+
+    fn sbox(&mut self) {
+        for i in 0..WIDTH {
+            self.state[i] = self.state[i].pow7();
+        }
+    }
+
+    // MDS: 9 mul + 6 add — fully unrolled by the compiler at -O3
+    fn mds(&mut self) {
+        let s = self.state;
+        for row in 0..WIDTH {
+            self.state[row] = (0..WIDTH).fold(Fp::ZERO, |acc, col| {
+                acc.add(MDS[row][col].mul(s[col]))
+            });
+        }
+    }
+
+    pub fn permute(&mut self) {
+        for round in 0..FULL_ROUNDS {
+            self.add_round_constants(round);
+            self.sbox();
+            self.mds();
+        }
+    }
+
+    pub fn absorb(&mut self, inputs: &[Fp]) {
+        for chunk in inputs.chunks(RATE) {
+            for (i, &x) in chunk.iter().enumerate() {
+                self.state[i] = self.state[i].add(x);
+            }
+            self.permute();
+        }
+    }
+
+    pub fn squeeze(&self) -> Fp {
+        self.state[0]
+    }
+
+    // Convenience: hash a fixed pair (most common in Mina Merkle trees)
+    pub fn hash_pair(left: Fp, right: Fp) -> Fp {
+        let mut s = Self::new();
+        s.absorb(&[left, right]);
+        s.squeeze()
+    }
+}
