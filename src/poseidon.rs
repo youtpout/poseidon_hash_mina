@@ -36,9 +36,18 @@ impl Sponge {
 
     pub fn permute(&mut self) {
         for round in 0..FULL_ROUNDS {
-            self.add_round_constants(round);
-            self.sbox();
-            self.mds();
+            // 1. S-box
+            for i in 0..WIDTH {
+                self.state[i] = self.state[i].pow7();
+            }
+
+            // 2. MDS + add round constants in one pass (matches original)
+            let s = self.state;
+            for row in 0..WIDTH {
+                self.state[row] =
+                    (0..WIDTH).fold(Fp::ZERO, |acc, col| acc.add(MDS[row][col].mul(s[col])));
+                self.state[row] = self.state[row].add(ROUND_CONSTANTS[round][row]);
+            }
         }
     }
 
