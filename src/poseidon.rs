@@ -1,6 +1,6 @@
 // src/poseidon.rs
 use crate::fp::Fp;
-use crate::params::{WIDTH, FULL_ROUNDS, RATE, MDS, ROUND_CONSTANTS};
+use crate::params::{FULL_ROUNDS, MDS, RATE, ROUND_CONSTANTS, WIDTH};
 
 pub struct Sponge {
     state: [Fp; WIDTH],
@@ -8,7 +8,9 @@ pub struct Sponge {
 
 impl Sponge {
     pub fn new() -> Self {
-        Self { state: [Fp::ZERO; WIDTH] }
+        Self {
+            state: [Fp::ZERO; WIDTH],
+        }
     }
 
     fn add_round_constants(&mut self, round: usize) {
@@ -27,9 +29,8 @@ impl Sponge {
     fn mds(&mut self) {
         let s = self.state;
         for row in 0..WIDTH {
-            self.state[row] = (0..WIDTH).fold(Fp::ZERO, |acc, col| {
-                acc.add(MDS[row][col].mul(s[col]))
-            });
+            self.state[row] =
+                (0..WIDTH).fold(Fp::ZERO, |acc, col| acc.add(MDS[row][col].mul(s[col])));
         }
     }
 
@@ -58,6 +59,16 @@ impl Sponge {
     pub fn hash_pair(left: Fp, right: Fp) -> Fp {
         let mut s = Self::new();
         s.absorb(&[left, right]);
+        s.squeeze()
+    }
+
+    pub fn hash(inputs: &[Fp]) -> Fp {
+        let mut s = Self::new();
+        if inputs.is_empty() {
+            s.permute(); // original behavior: one permutation on empty input
+        } else {
+            s.absorb(inputs);
+        }
         s.squeeze()
     }
 }

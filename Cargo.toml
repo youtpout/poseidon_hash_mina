@@ -5,9 +5,10 @@ edition = "2024"
 author = "youtpout and claude" 
 
 [dependencies]
-crypto-bigint = { version = "0.5", default-features = false }
+crypto-bigint = { version = "0.5", default-features = false, features = ["extra-sizes"] }
 
 [dev-dependencies]
+num-bigint = "0.4"
 criterion = { version = "0.5", features = ["html_reports"] }
 
 # SP1 patch: U256::mul_mod → syscall_uint256_mulmod in zkVM

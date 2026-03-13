@@ -1,14 +1,10 @@
 // src/fp.rs
-use crypto_bigint::{AddMod, MulMod, SubMod, U256};
+use crypto_bigint::{Encoding, NonZero, U256, U512};
 
-// Pallas modulus p, little-endian (crypto-bigint uses big-endian hex literals)
-// p = 2^254 + 45560315531419706090280762371685220353
-const MODULUS: U256 =
+const MODULUS_U256: U256 =
     U256::from_be_hex("40000000000000000000000000000000224698fc094cf91b992d30ed00000001");
 
-// Precomputed: p - 2, for Fermat inverse (x^(p-2) mod p)
-const MODULUS_MINUS_2: U256 =
-    U256::from_be_hex("40000000000000000000000000000000224698fc094cf91b992d30ecffffffff");
+const MODULUS: NonZero<U256> = NonZero::from_uint(MODULUS_U256);
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Fp(U256);
@@ -21,26 +17,49 @@ impl Fp {
         Fp(U256::from_be_hex(s))
     }
 
-    // -- Arithmetic --
-    // add_mod / sub_mod: pure carry arithmetic in crypto-bigint, no syscall needed
+    pub fn from(v: u64) -> Self {
+        Fp(U256::from(v))
+    }
+
     #[inline(always)]
     pub fn add(self, rhs: Self) -> Self {
-        Fp(self.0.add_mod(&rhs.0, &MODULUS))
+        Fp(self.0.add_mod(&rhs.0, &MODULUS_U256))
     }
 
     #[inline(always)]
     pub fn sub(self, rhs: Self) -> Self {
-        Fp(self.0.sub_mod(&rhs.0, &MODULUS))
+        Fp(self.0.sub_mod(&rhs.0, &MODULUS_U256))
     }
 
-    // mul_mod: → syscall_uint256_mulmod in zkVM via SP1 patch, schoolbook on native
     #[inline(always)]
     pub fn mul(self, rhs: Self) -> Self {
-        Fp(self.0.mul_mod(&rhs.0, &MODULUS))
+        #[cfg(target_os = "zkvm")]
+        {
+            extern "C" {
+                fn syscall_uint256_mulmod(x: *mut u32, y: *const u32);
+            }
+            let mut result = self.0.to_le_bytes();
+            let rhs_bytes = rhs.0.to_le_bytes();
+            unsafe {
+                syscall_uint256_mulmod(
+                    result.as_mut_ptr() as *mut u32,
+                    rhs_bytes.as_ptr() as *const u32,
+                );
+            }
+            Fp(U256::from_le_bytes(result))
+        }
+        #[cfg(not(target_os = "zkvm"))]
+        {
+            let (lo, hi) = self.0.mul_wide(&rhs.0);
+            let wide = U512::from((lo, hi));
+            let modulus_512 = U512::from((MODULUS_U256, U256::ZERO));
+            let (_, rem) = wide.div_rem(&NonZero::from_uint(modulus_512));
+            Fp(U256::from_le_bytes(
+                rem.to_le_bytes()[..32].try_into().unwrap(),
+            ))
+        }
     }
 
-    // S-box: x^7 with 4 multiplications (squaring chain)
-    // x^2 → x^4 → x^6 → x^7
     #[inline(always)]
     pub fn pow7(self) -> Self {
         let x2 = self.mul(self);
@@ -49,16 +68,11 @@ impl Fp {
         x6.mul(self)
     }
 
-    // Serialization helpers
     pub fn to_be_bytes(self) -> [u8; 32] {
-        self.0.to_be_bytes()
+        Encoding::to_be_bytes(&self.0)
     }
 
     pub fn from_be_bytes(bytes: [u8; 32]) -> Self {
-        Fp(U256::from_be_bytes(bytes))
-    }
-
-    pub fn from(v: u64) -> Self {
-        Fp(U256::from(v))
+        Fp(<U256 as Encoding>::from_be_bytes(bytes))
     }
 }

@@ -1,4 +1,5 @@
-use poseidon_mina::{Fp, Sponge};
+// src/main.rs
+use poseidon_hash_mina::{Fp, Sponge};
 
 fn main() {
     // Hash a single value
